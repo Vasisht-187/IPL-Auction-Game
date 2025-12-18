@@ -1,0 +1,257 @@
+import express from "express"
+import http from "http"
+import cors from "cors"
+import { Server } from "socket.io"
+import { randomUUID } from "crypto"
+import { rooms, RoomPlayer } from "./room"
+import { IPL_TEAMS } from "./teams"
+import { auctionPool, AuctionPlayer } from "./auctionPool"
+
+const app = express()
+app.use(cors())
+
+const server = http.createServer(app)
+const io = new Server(server, { cors: { origin: "*" } })
+
+const MARQUEE_THRESHOLD = 9.0
+
+/* ================= AUCTION SETS ================= */
+
+const marqueePlayers = auctionPool.filter(p => p.rating >= MARQUEE_THRESHOLD)
+const normalPlayers = auctionPool.filter(p => p.rating < MARQUEE_THRESHOLD)
+
+const orderedAuctionPool = [...marqueePlayers, ...normalPlayers]
+
+type AuctionSet = "MARQUEE" | "NORMAL"
+
+type AuctionState = {
+  currentIndex: number
+  currentPlayer: AuctionPlayer | null
+  currentBid: number
+  highestBidderUsername: string | null
+  highestBidderTeam: string | null
+  lastBidTeam: string | null
+  finalizeTimeout: ReturnType<typeof setTimeout> | null
+  deadline: number | null
+  currentSet: AuctionSet
+}
+
+const auctionStateByRoom: Record<string, AuctionState> = {}
+
+io.on("connection", socket => {
+
+  /* ================= ROOM ================= */
+
+  socket.on("createRoom", ({ username }) => {
+    if (!username?.trim()) return
+
+    const roomId = randomUUID().slice(0, 6)
+    rooms.set(roomId, {
+      roomId,
+      status: "WAITING",
+      players: [{ socketId: socket.id, username, isHost: true }]
+    })
+
+    socket.join(roomId)
+    socket.emit("roomJoined", rooms.get(roomId))
+  })
+
+  socket.on("joinRoom", ({ roomId, username }) => {
+    const room = rooms.get(roomId)
+    if (!room || room.status === "STARTED" || room.players.length >= 10) return
+
+    room.players.push({ socketId: socket.id, username, isHost: false })
+    socket.join(roomId)
+    io.to(roomId).emit("roomUpdated", room)
+  })
+
+  socket.on('disconnect', () => {
+    for (const [roomId, room] of rooms.entries()) {
+      const index = room.players.findIndex(p => p.socketId === socket.id)
+            if (index === -1) continue
+
+            const wasHost = room.players[index].isHost
+            room.players.splice(index, 1)
+
+            if (room.players.length === 0) {
+                rooms.delete(roomId)
+                if (auctionStateByRoom[roomId]) {
+                    const st = auctionStateByRoom[roomId]
+                    if (st.finalizeTimeout) clearTimeout(st.finalizeTimeout)
+                    delete auctionStateByRoom[roomId]
+                }
+                return
+            }
+
+            if (wasHost) room.players[0].isHost = true
+            io.to(roomId).emit('roomUpdated', room)
+        }
+    })
+  /* ================= TEAM SELECTION ================= */
+
+  socket.on("selectTeam", ({ roomId, teamName }) => {
+    const room = rooms.get(roomId)
+    if (!room) return
+
+    if (room.players.some(p => p.teamName === teamName)) return
+
+    const player = room.players.find(p => p.socketId === socket.id)
+    if (!player) return
+
+    player.teamName = teamName
+    io.to(roomId).emit("roomUpdated", room)
+  })
+
+  /* ================= START GAME ================= */
+
+  socket.on("startGame", ({ roomId }) => {
+    const room = rooms.get(roomId)
+    if (!room) return
+
+    const host = room.players.find(p => p.socketId === socket.id)
+    if (!host || !host.isHost) return
+    // if (room.players.length < 5) return
+    if (room.players.some(p => !p.teamName)) return
+
+    room.players.forEach(p => {
+      p.purse = 100
+      p.playersBought = 0
+      p.rating = 0
+      p.boughtPlayers = []
+    })
+
+    room.status = "STARTED"
+    io.to(roomId).emit("gameStarted", room)
+
+    auctionStateByRoom[roomId] = {
+      currentIndex: 0,
+      currentPlayer: null,
+      currentBid: 0,
+      highestBidderUsername: null,
+      highestBidderTeam: null,
+      lastBidTeam: null,
+      finalizeTimeout: null,
+      deadline: null,
+      currentSet: "MARQUEE"
+    }
+
+    io.to(roomId).emit("auctionSetAnnouncement", {
+      set: "MARQUEE",
+      message: "Marquee Players Auction is about to begin!"
+    })
+
+    setTimeout(() => startNextPlayer(roomId), 3000)
+  })
+
+  /* ================= BIDDING ================= */
+
+  socket.on("placeBid", ({ roomId, bidAmount }) => {
+    const room = rooms.get(roomId)
+    const st = auctionStateByRoom[roomId]
+    if (!room || !st || !st.currentPlayer) return
+
+    const me = room.players.find(p => p.socketId === socket.id)
+    if (!me || bidAmount <= st.currentBid || bidAmount > (me.purse || 0)) return
+    if (st.lastBidTeam === me.teamName) return
+
+    st.currentBid = bidAmount
+    st.highestBidderUsername = me.username
+    st.highestBidderTeam = me.teamName!
+    st.lastBidTeam = me.teamName!
+
+    clearTimeout(st.finalizeTimeout!)
+    st.deadline = Date.now() + 30000
+    st.finalizeTimeout = setTimeout(() => finalizeBid(roomId), 30000)
+
+    io.to(roomId).emit("auctionPlayer", {
+      player: st.currentPlayer,
+      currentBid: st.currentBid,
+      highestBidder: st.highestBidderUsername,
+      highestBidderTeam: st.highestBidderTeam,
+      remainingTime: Math.ceil((st.deadline - Date.now()) / 1000)
+    })
+  })
+
+  /* ================= CORE AUCTION FLOW ================= */
+
+  function startNextPlayer(roomId: string) {
+    const room = rooms.get(roomId)
+    const st = auctionStateByRoom[roomId]
+    if (!room || !st) return
+
+    if (st.currentIndex >= orderedAuctionPool.length) {
+      io.to(roomId).emit("auctionEnded", room)
+      delete auctionStateByRoom[roomId]
+      return
+    }
+
+    const next = orderedAuctionPool[st.currentIndex]
+    const nextSet: AuctionSet = next.rating >= MARQUEE_THRESHOLD ? "MARQUEE" : "NORMAL"
+
+    if (nextSet !== st.currentSet) {
+      st.currentSet = nextSet
+
+      io.to(roomId).emit("auctionSetAnnouncement", {
+        set: nextSet,
+        message: "Marquee Players Completed. Next Set Starting!"
+      })
+
+      setTimeout(() => startNextPlayer(roomId), 3000)
+      return
+    }
+
+    st.currentPlayer = next
+    st.currentBid = next.basePrice
+    st.deadline = Date.now() + 30000
+    st.finalizeTimeout = setTimeout(() => finalizeBid(roomId), 30000)
+
+    io.to(roomId).emit("auctionPlayer", {
+      player: next,
+      currentBid: next.basePrice,
+      highestBidder: null,
+      highestBidderTeam: null,
+      remainingTime: 30
+    })
+  }
+
+  function finalizeBid(roomId: string) {
+    const room = rooms.get(roomId)
+    const st = auctionStateByRoom[roomId]
+    if (!room || !st || !st.currentPlayer) return
+
+    clearTimeout(st.finalizeTimeout!)
+
+    const winner = st.highestBidderUsername
+      ? room.players.find(p => p.username === st.highestBidderUsername)
+      : null
+
+    if (winner) {
+      winner.purse! -= st.currentBid
+      winner.playersBought!++
+      winner.rating! += st.currentPlayer.rating
+      winner.boughtPlayers!.push(st.currentPlayer)
+    }
+
+    io.to(roomId).emit("playerBought", {
+      player: st.currentPlayer,
+      teamName: winner?.teamName || null,
+      username: winner?.username || null,
+      price: st.currentBid,
+      updatedRoom: room
+    })
+
+    st.currentIndex++
+    st.currentPlayer = null
+    st.currentBid = 0
+    st.highestBidderUsername = null
+    st.highestBidderTeam = null
+    st.lastBidTeam = null
+    st.deadline = null
+
+    setTimeout(() => startNextPlayer(roomId), 2000)
+  }
+})
+
+server.listen(4000, () => {
+  console.log("Server running on 4000")
+})
