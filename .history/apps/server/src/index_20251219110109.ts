@@ -58,7 +58,7 @@ io.on("connection", socket => {
 
   socket.on("joinRoom", ({ roomId, username }) => {
     const room = rooms.get(roomId)
-    if (!room) return
+    if (!room || room.status === "STARTED" || room.players.length >= 10) return
 
     // If reconnecting (same username), update socketId and mark connected
     const existing = room.players.find(p => p.username === username)
@@ -67,8 +67,6 @@ io.on("connection", socket => {
       existing.connected = true
       existing.isHost = existing.isHost || false
     } else {
-      // Prevent new joins after game has started or if room is full
-      if (room.status === "STARTED" || room.players.length >= 10) return
       room.players.push({ socketId: socket.id, username, isHost: false, connected: true })
     }
     socket.join(roomId)
@@ -172,9 +170,7 @@ io.on("connection", socket => {
     if (!room || !st || !st.currentPlayer) return
 
     const me = room.players.find(p => p.socketId === socket.id)
-  if (!me || bidAmount <= st.currentBid || bidAmount > (me.purse || 0)) return
-  // prevent bidding if team already has full squad
-  if ((me.playersBought || 0) >= 15) return
+    if (!me || bidAmount <= st.currentBid || bidAmount > (me.purse || 0)) return
     if (st.lastBidTeam === me.teamName) return
 
     st.currentBid = bidAmount
@@ -229,8 +225,8 @@ io.on("connection", socket => {
       st.currentSet = nextSet
 
       io.to(roomId).emit("auctionSetAnnouncement", {
-  set: nextSet,
-  message: "Marquee Players Completed. Next set (CAPPED & UNCAPPED) is starting now!"
+        set: nextSet,
+        message: "Marquee Players Completed. Next Set Starting!"
       })
 
       setTimeout(() => startNextPlayer(roomId), 3000)

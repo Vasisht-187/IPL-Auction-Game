@@ -252,21 +252,21 @@ export default function Home() {
 
   if (room && room.status === "STARTED") {
     return (
-      <div className="min-h-screen text-white p-8 bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center">
+      <div className="min-h-screen text-white p-6 bg-[radial-gradient(circle_at_top,#071029,#020617_70%)] flex items-center">
         <ToastContainer />
 
-        {/* Timer - minimized center-top */}
-        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="relative w-14 h-14">
-            <svg viewBox="0 0 36 36" className="w-full h-full drop-shadow-lg hover:drop-shadow-xl transition-all">
+        {/* Timer (visual only) - circular progress with label */}
+        <div className="fixed top-4 right-4 flex items-center gap-3">
+          <div className="relative w-16 h-16">
+            <svg viewBox="0 0 36 36" className="w-full h-full">
               <path
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
-                stroke="rgba(148, 163, 184, 0.2)"
+                stroke="#071029"
                 strokeWidth="2"
               />
               <path
-                stroke={timer <= 5 ? '#ef4444' : '#fbbf24'}
+                stroke={timer <= 5 ? '#ef4444' : '#10b981'}
                 strokeWidth="2.6"
                 fill="none"
                 strokeLinecap="round"
@@ -274,114 +274,86 @@ export default function Home() {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <div className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${timer <= 5 ? 'text-red-400 animate-pulse' : 'text-amber-300'}`}>
-              {timer}
+            <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
+              {timer}s
             </div>
+          </div>
+          <div className={`px-3 py-1 rounded-full text-sm font-semibold ${timer <= 5 ? 'bg-red-600 text-white animate-pulse' : 'bg-green-600 text-white'}`}>
+            ⏱ TIMER
           </div>
         </div>
 
-
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-12 gap-8 items-stretch">
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-12 gap-6 items-center">
 
           {/* TEAMS */}
-          <aside className="col-span-3 space-y-3">
-            <h3 className="text-2xl font-black text-amber-400 drop-shadow-lg uppercase tracking-widest">🏏 Teams</h3>
+          <aside className="col-span-3 space-y-4">
+            <h3 className="text-lg font-bold text-yellow-400">🏏 Teams</h3>
             {room.players.map((p, i) => (
               <div
                 key={p.socketId}
-                className={`p-4 rounded-2xl backdrop-blur-md border-2 transition-all duration-300 transform hover:scale-105 ${
-                  p.username === username
-                    ? "border-amber-500/70 bg-gradient-to-br from-amber-600/20 to-amber-700/10 shadow-lg shadow-amber-500/30"
-                    : "border-slate-600/50 bg-gradient-to-br from-slate-800/40 to-slate-900/30 hover:border-slate-500/60"
-                }`}
+                className={`p-3 rounded-xl border backdrop-blur-sm
+                ${p.username === username
+                  ? "border-yellow-500 bg-yellow-500/6"
+                  : "border-white/6 bg-black/50"}`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between font-semibold">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl drop-shadow-lg">{AVATARS[i % AVATARS.length]}</span>
-                    <div>
-                      <div className="font-bold text-white text-lg">{p.teamName || "—"}</div>
-                      <div className="text-xs text-slate-400">{p.username}</div>
-                    </div>
+                    <div className="text-2xl">{AVATARS[i % AVATARS.length]}</div>
+                    <div className="text-sm">{p.teamName || "—"}</div>
                   </div>
+                  <div className="text-sm text-gray-300">👥 {p.playersBought}</div>
                 </div>
-                <div className="text-sm text-slate-300 mt-3 space-y-1 border-t border-slate-600/30 pt-3">
-                  <div className="flex justify-between">
-                    <span>💰 Purse:</span>
-                    <span className="font-semibold text-amber-300">₹{Number(p.purse ?? 0).toFixed(2)} Cr</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>👥 Squad:</span>
-                    <span className="font-semibold text-blue-300">{p.playersBought ?? 0}/15</span>
-                  </div>
-                </div>
+                <div className="text-xs text-gray-400 mt-2">💰 ₹{p.purse}</div>
               </div>
             ))}
           </aside>
 
           {/* AUCTION STAGE */}
           <main className="col-span-6 flex items-center justify-center">
-
-            <div className="w-full bg-linear-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 border-2 border-amber-500/50 rounded-3xl p-10 text-center shadow-2xl shadow-amber-500/20 backdrop-blur-md">
-              <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">↓ NOW AUCTIONING ↓</p>
+            <div className="w-full bg-linear-to-b from-black/60 via-black/40 to-black/30 border border-yellow-600 rounded-3xl p-8 text-center shadow-2xl">
+              <p className="text-xs uppercase text-gray-400">Now Auctioning</p>
 
               {currentPlayer ? (
                 <>
-                  <div className="mt-6 flex items-center justify-center gap-6">
-                    <div className="w-24 h-24 rounded-full bg-linear-to-br from-amber-400 to-orange-600 flex items-center justify-center text-4xl font-bold shadow-lg shadow-amber-600/50 transform hover:scale-110 transition-transform">
-                      {currentPlayer.role.substring(0, 2)}
+                  <div className="mt-2 flex items-center justify-center gap-4">
+                    <div className="w-20 h-20 rounded-full bg-linear-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-3xl font-bold shadow-inner">
+                      {currentPlayer.role.substring(0,2)}
                     </div>
                     <div className="text-left">
-                      <h1 className="text-4xl md:text-5xl font-black text-amber-300 leading-tight drop-shadow-lg">
+                      <h1 className="text-3xl md:text-4xl font-extrabold text-yellow-400 leading-tight">
                         {(() => {
                           const nm = splitName(currentPlayer.name)
-                          return (
-                            <>
-                              <span>{nm.first}</span>
-                              {nm.last ? <span className="text-amber-200"> {nm.last}</span> : null}
-                            </>
-                          )
+                          return (<><span>{nm.first}</span>{nm.last ? <span className="text-yellow-200"> {nm.last}</span> : null}</>)
                         })()}
                       </h1>
-                      <div className="text-sm text-slate-300 mt-2 font-medium">
-                        {currentPlayer.role} · {currentPlayer.category}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">⭐ Rating: <span className="text-blue-300 font-bold">{currentPlayer.rating}</span></div>
+                      <div className="text-sm text-gray-300 mt-1">{currentPlayer.role} · {currentPlayer.category}</div>
+                      <div className="text-xs text-gray-400 mt-1">⭐ Rating: {currentPlayer.rating}</div>
                     </div>
                   </div>
 
-                  <div className="mt-8 space-y-3">
-                    <div className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-amber-400 to-orange-400 drop-shadow-xl">
-                      ₹{currentBid.toFixed(2)} Cr
-                    </div>
-                    <div className="text-sm text-slate-300">
-                      Base Price: <span className="font-bold text-blue-400">₹{currentPlayer.basePrice} Cr</span>
-                    </div>
+                  <div className="mt-6 text-4xl md:text-5xl font-extrabold text-green-400">
+                    ₹{currentBid.toFixed(2)} Cr
                   </div>
 
-                  <div className="mt-6 p-4 rounded-xl bg-slate-800/50 border border-slate-600/50">
-                    <p className="text-xs text-slate-400 uppercase tracking-wider">Highest Bidder</p>
-                    <p className="text-xl font-bold text-amber-300 mt-1">
-                      {highestBidderTeam && highestBidder ? `${highestBidderTeam} (${highestBidder})` : "—"}
-                    </p>
-                  </div>
+                  <p className="mt-2 text-sm text-gray-400">
+                    Highest Bidder: {highestBidderTeam && highestBidder ? `${highestBidderTeam} (${highestBidder})` : "—"}
+                  </p>
 
                   <div className="flex justify-center gap-4 mt-8">
-                    <button
-                      onClick={() => {
-                        if (!currentPlayer) return
-                        const base = Number(currentPlayer.basePrice ?? 0)
-                        const inc = base >= 2 ? 0.5 : 0.2
-                        placeBid(inc)
-                      }}
-                      className="px-10 py-4 rounded-xl font-bold text-lg bg-linear-to-r from-amber-400 to-orange-500 text-slate-900 hover:from-amber-300 hover:to-orange-400 shadow-lg shadow-amber-500/50 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                      disabled={(me?.playersBought || 0) >= 15 || !currentPlayer}
-                    >
-                      🔨 BID +{currentPlayer ? (Number(currentPlayer.basePrice ?? 0) >= 2 ? '0.5' : '0.2') : '--'} Cr
-                    </button>
+                    {[0.25, 0.5, 32].map(v => (
+                      <button
+                        key={v}
+                        onClick={() => placeBid(v)}
+                        className="px-6 py-2 rounded-lg font-bold bg-yellow-400 text-black hover:bg-yellow-300 shadow-md"
+                        disabled={(me?.playersBought || 0) >= 15}
+                      >
+                        +{v} Cr
+                      </button>
+                    ))}
                   </div>
                 </>
               ) : (
-                <div className="text-slate-400 text-lg mt-8 animate-pulse">
+                <div className="text-gray-400 text-lg mt-8 animate-pulse">
                   Loading next player...
                 </div>
               )}
@@ -389,101 +361,40 @@ export default function Home() {
           </main>
 
           {/* YOU */}
-          <aside className="col-span-3 space-y-3">
-            <h3 className="text-2xl font-black text-amber-400 drop-shadow-lg uppercase tracking-widest">🎮 You</h3>
-            
-            {/* Personal Card */}
-            <div className="bg-linear-to-br from-slate-800/60 to-slate-900/50 border-2 border-blue-500/50 rounded-2xl p-5 shadow-lg shadow-blue-500/20 backdrop-blur-md">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-2xl font-black text-white">{me?.teamName || '—'}</div>
-                  <div className="text-xs text-slate-400 mt-1">@{username}</div>
-                </div>
-                <div className="text-3xl drop-shadow-lg">{AVATARS[room.players.findIndex(p => p.username === username) % AVATARS.length]}</div>
-              </div>
-              
-              <div className="border-t border-slate-600/50 pt-3 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-300">💰 Purse Left:</span>
-                  <span className="font-bold text-amber-300 text-lg">₹{Number(me?.purse ?? 0).toFixed(2)} Cr</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-300">👥 Squad:</span>
-                  <span className="font-bold text-blue-300">{me?.playersBought ?? 0}/15</span>
-                </div>
-                {me?.boughtPlayers && me.boughtPlayers.length > 0 ? (() => {
-                  const totalRating = me.boughtPlayers.reduce((s, pl) => s + (pl.rating || 0), 0)
-                  const avg = totalRating / me.boughtPlayers.length
-                  return (
-                    <div className="flex justify-between items-center bg-linear-to-r from-blue-900/40 to-purple-900/40 p-2 rounded-lg border border-blue-600/30">
-                      <span className="text-slate-300">⭐ Combined Rating:</span>
-                      <span className="font-bold text-purple-300">{totalRating.toFixed(1)} <span className="text-xs text-slate-400">(avg {avg.toFixed(1)})</span></span>
-                    </div>
-                  )
-                })() : null}
+          <aside className="col-span-3 space-y-4">
+            <h3 className="text-lg font-bold text-yellow-400">🎮 You</h3>
+            <div className="bg-black/60 border border-white/6 rounded-xl p-4 shadow-lg">
+              <div className="font-semibold">{me?.teamName}</div>
+              <div className="text-sm text-gray-300">
+                💰 ₹{me?.purse} | 👥 {me?.playersBought}
               </div>
             </div>
 
-            {/* My Squad */}
-            <div className="bg-linear-to-br from-slate-800/50 to-slate-900/40 border-2 border-slate-600/40 rounded-2xl p-4 backdrop-blur-md">
-              <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">📋 My Squad</h4>
+            <div>
+              <h4 className="text-sm text-gray-400">My Squad</h4>
               {me?.boughtPlayers?.length ? (
-                <ul className="space-y-2 max-h-48 overflow-y-auto">
+                <ul className="mt-2 text-yellow-300 space-y-1">
                   {me.boughtPlayers.map(pl => (
-                    <li key={pl.id} className="px-4 py-3 rounded-lg bg-slate-700/40 border border-slate-600/50 hover:border-blue-500/50 transition-colors flex items-center justify-between">
-                      <div className="flex-1">
-                        <span className="text-amber-300 font-semibold">
-                          {(() => {
-                            const nm = splitName(pl.name)
-                            return <>{nm.first}{nm.last ? ` ${nm.last}` : ''}</>
-                          })()}
-                        </span>
-                        <span className="text-xs text-slate-400 ml-2">({pl.role})</span>
-                      </div>
-                      <div className="text-sm font-bold text-blue-300 ml-2">⭐ {pl.rating}</div>
-                    </li>
+                    <li key={pl.id} className="px-3 py-1 rounded bg-black/40">• {(() => { const nm = splitName(pl.name); return <>{nm.first}{nm.last ? <span className="text-yellow-200"> {nm.last}</span> : null}</> })()} <span className="text-xs text-gray-400">({pl.role})</span></li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-500 text-center py-4">No players yet</p>
+                <p className="text-sm text-gray-500 mt-2">No players yet</p>
               )}
             </div>
-
-            {/* Squad Requirements */}
+            {/* Show your role progress and checkmarks here only */}
             {((room as any).roleProgress || []).find((r: any) => r.username === username) ? (
               (() => {
                 const pr = (room as any).roleProgress.find((r: any) => r.username === username)
                 return (
-                  <div className="bg-linear-to-br from-slate-800/50 to-slate-900/40 border-2 border-emerald-500/40 rounded-2xl p-4 shadow-lg shadow-emerald-500/10 backdrop-blur-md">
-                    <div className="font-bold text-slate-200 uppercase tracking-wider text-sm mb-3">✅ Requirements</div>
-                    
-                    <div className="space-y-3">
-                      {/* Progress bars */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-slate-300">Total Squad</span>
-                          <span className="font-bold text-amber-300">{pr.total ?? 0}/15</span>
-                        </div>
-                        <div className="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
-                          <div className="bg-linear-to-r from-amber-400 to-orange-500 h-full" style={{ width: `${Math.min(100, ((pr.total ?? 0) / 15) * 100)}%` }}></div>
-                        </div>
-                      </div>
-
-                      {/* Role requirements grid */}
-                      <div className="grid grid-cols-2 gap-2 border-t border-slate-600/30 pt-3">
-                        <div className={`p-2 rounded-lg text-center text-sm font-semibold ${pr.wk >= 2 ? 'bg-emerald-900/40 text-emerald-300' : 'bg-slate-700/30 text-slate-400'}`}>
-                          🧤 WK<br /><span className="text-xs">{pr.wk}/2</span>
-                        </div>
-                        <div className={`p-2 rounded-lg text-center text-sm font-semibold ${pr.bat >= 2 ? 'bg-emerald-900/40 text-emerald-300' : 'bg-slate-700/30 text-slate-400'}`}>
-                          🏏 BAT<br /><span className="text-xs">{pr.bat}/2</span>
-                        </div>
-                        <div className={`p-2 rounded-lg text-center text-sm font-semibold ${pr.bowl >= 2 ? 'bg-emerald-900/40 text-emerald-300' : 'bg-slate-700/30 text-slate-400'}`}>
-                          🎱 BOWL<br /><span className="text-xs">{pr.bowl}/2</span>
-                        </div>
-                        <div className={`p-2 rounded-lg text-center text-sm font-semibold ${pr.ar >= 2 ? 'bg-emerald-900/40 text-emerald-300' : 'bg-slate-700/30 text-slate-400'}`}>
-                          🔄 AR<br /><span className="text-xs">{pr.ar}/2</span>
-                        </div>
-                      </div>
+                  <div className="mt-4 bg-zinc-800/60 rounded-xl p-3 text-sm text-gray-200">
+                    <div className="font-semibold mb-2">Squad Requirements</div>
+                    <div>✔ Squad: {pr.total}/15</div>
+                    <div className="flex gap-3 mt-2">
+                      <div className={pr.wk >= 2 ? 'text-green-400' : 'text-gray-500'}>WK: {pr.wk}/2</div>
+                      <div className={pr.bat >= 2 ? 'text-green-400' : 'text-gray-500'}>BAT: {pr.bat}/2</div>
+                      <div className={pr.bowl >= 2 ? 'text-green-400' : 'text-gray-500'}>BOWL: {pr.bowl}/2</div>
+                      <div className={pr.ar >= 2 ? 'text-green-400' : 'text-gray-500'}>AR: {pr.ar}/2</div>
                     </div>
                   </div>
                 )
@@ -565,7 +476,7 @@ export default function Home() {
         <div className="text-sm text-gray-300 space-y-1">
           <p>🏏 Create or join a room</p>
           <p>🎯 Select your IPL team</p>
-          <p>💰 Each team gets ₹100 Cr purse</p>
+          <p>💰 Bid strategically with ₹100 Cr purse</p>
           <p>⏱ 30s timer resets on every bid</p>
           <p>🏆 Build the strongest squad</p>
         </div>

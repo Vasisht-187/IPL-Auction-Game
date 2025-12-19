@@ -8,7 +8,8 @@ import "react-toastify/dist/ReactToastify.css"
 /* ================= TYPES ================= */
 
 type AuctionPlayer = {
-  id: string
+  id: st                  "border-amber-500/70 bg-linear-to-br from-amber-600/20 to-amber-700/10 shadow-lg shadow-amber-500/30"
+                    : "border-slate-600/50 bg-linear-to-br from-slate-800/40 to-slate-900/30 hover:border-slate-500/60"ng
   name: string
   role: string
   category: string
@@ -255,10 +256,10 @@ export default function Home() {
       <div className="min-h-screen text-white p-8 bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center">
         <ToastContainer />
 
-        {/* Timer - minimized center-top */}
-        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="relative w-14 h-14">
-            <svg viewBox="0 0 36 36" className="w-full h-full drop-shadow-lg hover:drop-shadow-xl transition-all">
+        {/* Timer (visual only) - circular progress with label */}
+        <div className="fixed top-6 right-6 flex items-center gap-3 z-50">
+          <div className="relative w-20 h-20">
+            <svg viewBox="0 0 36 36" className="w-full h-full drop-shadow-lg">
               <path
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
@@ -274,12 +275,14 @@ export default function Home() {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <div className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${timer <= 5 ? 'text-red-400 animate-pulse' : 'text-amber-300'}`}>
-              {timer}
+            <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-amber-300">
+              {timer}s
             </div>
           </div>
+          <div className={`px-4 py-2 rounded-full text-sm font-bold tracking-wider ${timer <= 5 ? 'bg-red-600 text-white animate-pulse shadow-red-500/50 shadow-lg' : 'bg-amber-500 text-slate-900 shadow-amber-500/50 shadow-lg'}`}>
+            ⏱ TIMER
+          </div>
         </div>
-
 
         <div className="w-full max-w-7xl mx-auto grid grid-cols-12 gap-8 items-stretch">
 
@@ -307,7 +310,7 @@ export default function Home() {
                 <div className="text-sm text-slate-300 mt-3 space-y-1 border-t border-slate-600/30 pt-3">
                   <div className="flex justify-between">
                     <span>💰 Purse:</span>
-                    <span className="font-semibold text-amber-300">₹{Number(p.purse ?? 0).toFixed(2)} Cr</span>
+                    <span className="font-semibold text-amber-300">₹{Number(p.purse ?? 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>👥 Squad:</span>
@@ -320,7 +323,6 @@ export default function Home() {
 
           {/* AUCTION STAGE */}
           <main className="col-span-6 flex items-center justify-center">
-
             <div className="w-full bg-linear-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 border-2 border-amber-500/50 rounded-3xl p-10 text-center shadow-2xl shadow-amber-500/20 backdrop-blur-md">
               <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">↓ NOW AUCTIONING ↓</p>
 
@@ -405,7 +407,7 @@ export default function Home() {
               <div className="border-t border-slate-600/50 pt-3 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">💰 Purse Left:</span>
-                  <span className="font-bold text-amber-300 text-lg">₹{Number(me?.purse ?? 0).toFixed(2)} Cr</span>
+                  <span className="font-bold text-amber-300 text-lg">₹{Number(me?.purse ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">👥 Squad:</span>
@@ -565,7 +567,7 @@ export default function Home() {
         <div className="text-sm text-gray-300 space-y-1">
           <p>🏏 Create or join a room</p>
           <p>🎯 Select your IPL team</p>
-          <p>💰 Each team gets ₹100 Cr purse</p>
+          <p>💰 Bid strategically with ₹100 Cr purse</p>
           <p>⏱ 30s timer resets on every bid</p>
           <p>🏆 Build the strongest squad</p>
         </div>

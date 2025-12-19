@@ -255,10 +255,10 @@ export default function Home() {
       <div className="min-h-screen text-white p-8 bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center">
         <ToastContainer />
 
-        {/* Timer - minimized center-top */}
-        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="relative w-14 h-14">
-            <svg viewBox="0 0 36 36" className="w-full h-full drop-shadow-lg hover:drop-shadow-xl transition-all">
+        {/* Timer (visual only) - circular progress with label */}
+        <div className="fixed top-6 right-6 flex items-center gap-3 z-50">
+          <div className="relative w-20 h-20">
+            <svg viewBox="0 0 36 36" className="w-full h-full drop-shadow-lg">
               <path
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
@@ -274,12 +274,14 @@ export default function Home() {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <div className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${timer <= 5 ? 'text-red-400 animate-pulse' : 'text-amber-300'}`}>
-              {timer}
+            <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-amber-300">
+              {timer}s
             </div>
           </div>
+          <div className={`px-4 py-2 rounded-full text-sm font-bold tracking-wider ${timer <= 5 ? 'bg-red-600 text-white animate-pulse shadow-red-500/50 shadow-lg' : 'bg-amber-500 text-slate-900 shadow-amber-500/50 shadow-lg'}`}>
+            ⏱ TIMER
+          </div>
         </div>
-
 
         <div className="w-full max-w-7xl mx-auto grid grid-cols-12 gap-8 items-stretch">
 
@@ -307,7 +309,7 @@ export default function Home() {
                 <div className="text-sm text-slate-300 mt-3 space-y-1 border-t border-slate-600/30 pt-3">
                   <div className="flex justify-between">
                     <span>💰 Purse:</span>
-                    <span className="font-semibold text-amber-300">₹{Number(p.purse ?? 0).toFixed(2)} Cr</span>
+                    <span className="font-semibold text-amber-300">₹{Number(p.purse ?? 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>👥 Squad:</span>
@@ -320,7 +322,6 @@ export default function Home() {
 
           {/* AUCTION STAGE */}
           <main className="col-span-6 flex items-center justify-center">
-
             <div className="w-full bg-linear-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 border-2 border-amber-500/50 rounded-3xl p-10 text-center shadow-2xl shadow-amber-500/20 backdrop-blur-md">
               <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">↓ NOW AUCTIONING ↓</p>
 
@@ -405,7 +406,7 @@ export default function Home() {
               <div className="border-t border-slate-600/50 pt-3 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">💰 Purse Left:</span>
-                  <span className="font-bold text-amber-300 text-lg">₹{Number(me?.purse ?? 0).toFixed(2)} Cr</span>
+                  <span className="font-bold text-amber-300 text-lg">₹{Number(me?.purse ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">👥 Squad:</span>
@@ -415,7 +416,7 @@ export default function Home() {
                   const totalRating = me.boughtPlayers.reduce((s, pl) => s + (pl.rating || 0), 0)
                   const avg = totalRating / me.boughtPlayers.length
                   return (
-                    <div className="flex justify-between items-center bg-linear-to-r from-blue-900/40 to-purple-900/40 p-2 rounded-lg border border-blue-600/30">
+                    <div className="flex justify-between items-center bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-2 rounded-lg border border-blue-600/30">
                       <span className="text-slate-300">⭐ Combined Rating:</span>
                       <span className="font-bold text-purple-300">{totalRating.toFixed(1)} <span className="text-xs text-slate-400">(avg {avg.toFixed(1)})</span></span>
                     </div>
@@ -465,7 +466,7 @@ export default function Home() {
                           <span className="font-bold text-amber-300">{pr.total ?? 0}/15</span>
                         </div>
                         <div className="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
-                          <div className="bg-linear-to-r from-amber-400 to-orange-500 h-full" style={{ width: `${Math.min(100, ((pr.total ?? 0) / 15) * 100)}%` }}></div>
+                          <div className="bg-gradient-to-r from-amber-400 to-orange-500 h-full" style={{ width: `${Math.min(100, ((pr.total ?? 0) / 15) * 100)}%` }}></div>
                         </div>
                       </div>
 
@@ -565,7 +566,7 @@ export default function Home() {
         <div className="text-sm text-gray-300 space-y-1">
           <p>🏏 Create or join a room</p>
           <p>🎯 Select your IPL team</p>
-          <p>💰 Each team gets ₹100 Cr purse</p>
+          <p>💰 Bid strategically with ₹100 Cr purse</p>
           <p>⏱ 30s timer resets on every bid</p>
           <p>🏆 Build the strongest squad</p>
         </div>

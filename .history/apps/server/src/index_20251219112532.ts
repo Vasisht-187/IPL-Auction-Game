@@ -229,8 +229,8 @@ io.on("connection", socket => {
       st.currentSet = nextSet
 
       io.to(roomId).emit("auctionSetAnnouncement", {
-  set: nextSet,
-  message: "Marquee Players Completed. Next set (CAPPED & UNCAPPED) is starting now!"
+        set: nextSet,
+        message: "Marquee Players Completed. Next Set Starting!"
       })
 
       setTimeout(() => startNextPlayer(roomId), 3000)

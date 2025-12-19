@@ -307,7 +307,7 @@ export default function Home() {
                 <div className="text-sm text-slate-300 mt-3 space-y-1 border-t border-slate-600/30 pt-3">
                   <div className="flex justify-between">
                     <span>💰 Purse:</span>
-                    <span className="font-semibold text-amber-300">₹{Number(p.purse ?? 0).toFixed(2)} Cr</span>
+                    <span className="font-semibold text-amber-300">₹{Number(p.purse ?? 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>👥 Squad:</span>
@@ -405,7 +405,7 @@ export default function Home() {
               <div className="border-t border-slate-600/50 pt-3 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">💰 Purse Left:</span>
-                  <span className="font-bold text-amber-300 text-lg">₹{Number(me?.purse ?? 0).toFixed(2)} Cr</span>
+                  <span className="font-bold text-amber-300 text-lg">₹{Number(me?.purse ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">👥 Squad:</span>

@@ -58,7 +58,7 @@ io.on("connection", socket => {
 
   socket.on("joinRoom", ({ roomId, username }) => {
     const room = rooms.get(roomId)
-    if (!room) return
+    if (!room || room.status === "STARTED" || room.players.length >= 10) return
 
     // If reconnecting (same username), update socketId and mark connected
     const existing = room.players.find(p => p.username === username)
@@ -67,8 +67,6 @@ io.on("connection", socket => {
       existing.connected = true
       existing.isHost = existing.isHost || false
     } else {
-      // Prevent new joins after game has started or if room is full
-      if (room.status === "STARTED" || room.players.length >= 10) return
       room.players.push({ socketId: socket.id, username, isHost: false, connected: true })
     }
     socket.join(roomId)
@@ -172,9 +170,7 @@ io.on("connection", socket => {
     if (!room || !st || !st.currentPlayer) return
 
     const me = room.players.find(p => p.socketId === socket.id)
-  if (!me || bidAmount <= st.currentBid || bidAmount > (me.purse || 0)) return
-  // prevent bidding if team already has full squad
-  if ((me.playersBought || 0) >= 15) return
+    if (!me || bidAmount <= st.currentBid || bidAmount > (me.purse || 0)) return
     if (st.lastBidTeam === me.teamName) return
 
     st.currentBid = bidAmount
@@ -208,29 +204,15 @@ io.on("connection", socket => {
       return
     }
 
-    // find next eligible player in the current set (skip if team already has 15 players)
-    let idx = st.currentIndex
-    let next: AuctionPlayer | undefined
-    while (idx < orderedAuctionPool.length) {
-      const candidate = orderedAuctionPool[idx]
-      const candidateSet: AuctionSet = candidate.rating >= MARQUEE_THRESHOLD ? "MARQUEE" : "NORMAL"
-      // stop scanning if we cross into a new set
-      if (candidateSet !== st.currentSet) break
-      next = candidate
-      break
-    }
-    if (!next) {
-      // no more players in this set, transition handled below
-      next = orderedAuctionPool[st.currentIndex]
-    }
+    const next = orderedAuctionPool[st.currentIndex]
     const nextSet: AuctionSet = next.rating >= MARQUEE_THRESHOLD ? "MARQUEE" : "NORMAL"
 
     if (nextSet !== st.currentSet) {
       st.currentSet = nextSet
 
       io.to(roomId).emit("auctionSetAnnouncement", {
-  set: nextSet,
-  message: "Marquee Players Completed. Next set (CAPPED & UNCAPPED) is starting now!"
+        set: nextSet,
+        message: "Marquee Players Completed. Next Set Starting!"
       })
 
       setTimeout(() => startNextPlayer(roomId), 3000)
@@ -262,25 +244,11 @@ io.on("connection", socket => {
       ? room.players.find(p => p.username === st.highestBidderUsername)
       : null
 
-    // helper to count roles already in a team
-    const roleCounts = (p: RoomPlayer) => {
-      const counts: Record<string, number> = { WK: 0, BAT: 0, BOWL: 0, AR: 0 }
-      p.boughtPlayers?.forEach(bp => {
-        counts[bp.role] = (counts[bp.role] || 0) + 1
-      })
-      return counts
-    }
-
     if (winner) {
-      // enforce 15-player limit
-      if ((winner.playersBought || 0) >= 15) {
-        // team already full: do not assign player
-      } else {
-        winner.purse! -= st.currentBid
-        winner.playersBought!++
-        winner.rating! += st.currentPlayer.rating
-        winner.boughtPlayers!.push(st.currentPlayer)
-      }
+      winner.purse! -= st.currentBid
+      winner.playersBought!++
+      winner.rating! += st.currentPlayer.rating
+      winner.boughtPlayers!.push(st.currentPlayer)
     }
 
     io.to(roomId).emit("playerBought", {
@@ -290,21 +258,6 @@ io.on("connection", socket => {
       price: st.currentBid,
       updatedRoom: room
     })
-
-    // emit role progress for UI checkmarks per player
-    const progress = room.players.map(p => {
-      const counts = roleCounts(p)
-      return {
-        username: p.username,
-        teamName: p.teamName,
-        total: p.playersBought || 0,
-        wk: counts['WK'] || 0,
-        bat: counts['BAT'] || 0,
-        bowl: counts['BOWL'] || 0,
-        ar: counts['AR'] || 0
-      }
-    })
-    io.to(roomId).emit('roleProgress', progress)
 
     st.currentIndex++
     st.currentPlayer = null
